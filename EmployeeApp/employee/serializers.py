@@ -1,16 +1,16 @@
-import pandas as pd
-from rest_framework import serializers
-
+from .models import Employee
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import exceptions
-from .models import Employee
+from rest_framework import serializers
+
 
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
+
 
 # Register Serializer
 class RegisterSerializer(serializers.ModelSerializer):
@@ -24,6 +24,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
+
+# Login Serializer
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
@@ -49,13 +51,13 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 
+# Upload Serializer
 class UploadCsvSerializer(serializers.Serializer):
     csv = serializers.FileField()
 
 
+# Employeee Serializer
 class EmployeeSerializer(serializers.Serializer):
     class Meta:
         model = Employee
         fields = ('id', 'code', 'name', 'department', 'age', 'experience')
-
-
