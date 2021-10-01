@@ -4,6 +4,11 @@ from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register('employee', EmployeeViewSet)
+employee_list_view = EmployeeViewSet.as_view(
+    {
+        "get": "list"
+    }
+)
 
 urlpatterns = [
     path('register/', RegisterAPI.as_view(), name='register'),

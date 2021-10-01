@@ -21,7 +21,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User.objects.create_user(validated_data['username'], validated_data['email'], validated_data['password'])
-
         return user
 
 
@@ -33,7 +32,6 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get("username", "")
         password = data.get("password", "")
-
         if username and password:
             user = authenticate(username=username, password=password)
             if user:
@@ -57,7 +55,7 @@ class UploadCsvSerializer(serializers.Serializer):
 
 
 # Employeee Serializer
-class EmployeeSerializer(serializers.Serializer):
+class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('id', 'code', 'name', 'department', 'age', 'experience')

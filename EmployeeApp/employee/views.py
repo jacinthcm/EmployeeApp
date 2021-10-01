@@ -14,13 +14,16 @@ from rest_framework.authentication import TokenAuthentication
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = RegisterSerializer
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({"user": UserSerializer(user, context=self.get_serializer_context()).data,
-                         "token": token.key}, status=200)
+    def post(self, request):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"user": UserSerializer(user, context=self.get_serializer_context()).data,
+                             "token": token.key}, status=200)
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)
 
 
 # Login API
@@ -28,50 +31,59 @@ class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        django_login(request, user)
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key}, status=200)
+        try:
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.validated_data["user"]
+            django_login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"message": "Logged in successfully", "token": token.key}, status=200)
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)
 
 
 # Logout API
 class LogoutView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         django_logout(request)
-        return Response(status=204)
+        return Response({"message": "Logged out successfully"}, status=204)
 
 
 # Upload API
 class UploadView(APIView):
     serializer_class = UploadCsvSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        employee_csv = request.data.get("csv", "")
-        employee_data = pd.read_csv(employee_csv, sep=',')
-        row_count = employee_data.shape[0]
-        column_count = employee_data.shape[1]
-        if row_count > 20:
-            return Response({"error": "Invalid csv file. Must not contain more than 20 rows"}, status=400)
-        elif column_count < 5:
-            return Response({"error": "Invalid csv file. Must contain 5 columns minimum"}, status=400)
-        else:
-            for i in range(len(employee_data)):
-                Employee.objects.get_or_create(code=employee_data.iloc[i][0],
-                                               name=employee_data.iloc[i][1],
-                                               department=employee_data.iloc[i][2],
-                                               age=employee_data.iloc[i][3],
-                                               experience=employee_data.iloc[i][4],
-                                               )
-            return Response({"message": "Employee data added successfully"}, status=201)
+        try:
+            employee_csv = request.data.get("csv", "")
+            employee_data = pd.read_csv(employee_csv, sep=',')
+            row_count = employee_data.shape[0]
+            column_count = employee_data.shape[1]
+            if row_count > 20:
+                return Response({"error": "Invalid csv file. Must not contain more than 20 rows"}, status=400)
+            elif column_count < 5:
+                return Response({"error": "Invalid csv file. Must contain minimum 5 columns"}, status=400)
+            else:
+                for i in range(len(employee_data)):
+                    Employee.objects.get_or_create(code=employee_data.iloc[i][0],
+                                                   name=employee_data.iloc[i][1],
+                                                   department=employee_data.iloc[i][2],
+                                                   age=employee_data.iloc[i][3],
+                                                   experience=employee_data.iloc[i][4],
+                                                   )
+                return Response({"message": "Employee data added successfully"}, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
 
 # EmployeeView API
 class EmployeeViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = EmployeeSerializer
-    authentication_classes = (TokenAuthentication,)
+    queryset = Employee.objects.all()
