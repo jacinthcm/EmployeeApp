@@ -1,5 +1,5 @@
 # EmployeeApp
-This application is used to upload employee csv file and store data in django database. To run this application follow the step
+This application is used to upload employee csv file and store data in django database. To run this application follow the steps
 
 1.create virtual environment and activate it
 
